@@ -335,3 +335,5 @@ ASALocalRun/
 *.response
 *.exp
 *.lib
+Definitions.\S+.h
+Modules.\S+.cpp

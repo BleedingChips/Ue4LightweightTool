@@ -217,7 +217,7 @@ void FilteStaticMeshActor(const FString& name)
 	{
 		TArray<TWeakObjectPtr<>> object_array;
 		selection->GetSelectedObjects(object_array);
-		selection->BeginBatchSelectOperation();
+		GEditor->SelectNone(false, true, false);
 		auto count = object_array.Num();
 		for (size_t i = 0; i < count; ++i)
 		{
@@ -233,18 +233,11 @@ void FilteStaticMeshActor(const FString& name)
 						auto mesh = command->GetStaticMesh();
 						if (mesh != nullptr)
 							if (name == mesh->GetName())
-								continue;
+								GEditor->SelectActor(result, true, true, true);;
 					}
 				}
-				selection->Deselect(ptr.Get());
 			}
 		}
-		selection->EndBatchSelectOperation();
-		//GEditor->
-		//selection->
-		//selection->MarkBatchDirty();
-		//selection->MarkPackageDirty();
-		//GEditor->Dirty
 	}
 }
 
