@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="tool">
+      <UniqueIdentifier>{abfb321a-6f51-471b-9d55-d34705290906}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="tool\assert.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\character_encoding.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\file_asset.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\math.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\memory_pool.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\path_system.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\script_analyze.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\simple_command_analyzer.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\tool.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderDocEventStatistics.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratorCommand.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tool\asset.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\auto_adapter.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\character_encoding.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\file_asset.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\intrusive_ptr.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\mail.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\math.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\memory_pool.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\path_system.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\script_analyze.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\simple_command_analyzer.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\tmp.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\tmpcall.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\tool.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratorCommand.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="tool\readme.md">
+      <Filter>tool</Filter>
+    </None>
+  </ItemGroup>
+</Project>
