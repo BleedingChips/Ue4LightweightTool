@@ -6,14 +6,18 @@
 #include "Classes/Animation/SkeletalMeshActor.h"
 #include "InstancedFoliageActor.h"
 #include "MeshLODDetector.h"
+#include "SelectionFilter.h"
 #include <fstream>
 #include <map>
 #define LOCTEXT_NAMESPACE "FGaoShiPluginModule"
 
-
+DECLARE_LOG_CATEGORY_EXTERN(GaoShiPlugin, Log, All);
+DEFINE_LOG_CATEGORY(GaoShiPlugin);
 FConsoleCommandWithWorldAndArgsDelegate DetectObjectLODDelegate;
 
-FConsoleCommandWithWorldAndArgsDelegate RemoveFoliageInSelectedActorDelegarte;
+FConsoleCommandWithWorldAndArgsDelegate FilteStaticMeshActorDelegate;
+
+FConsoleCommandWithWorldAndArgsDelegate FilteClassNameAndNameDelegate;
 
 void FGaoShiPluginModule::StartupModule()
 {
@@ -26,11 +30,24 @@ void FGaoShiPluginModule::StartupModule()
 	ref.RegisterConsoleCommand(L"GaoShiDetectObjectLod", L"", DetectObjectLODDelegate);
 
 #ifdef WITH_EDITORONLY_DATA
-	RemoveFoliageInSelectedActorDelegarte.BindLambda([](const TArray< FString >& para, UWorld* World) {
-		if(para.Num() == 1)
-			FilteStaticMeshActor(para[0]);
+	FilteStaticMeshActorDelegate.BindLambda([](const TArray< FString >& para, UWorld* World) {
+		if (para.Num() == 1)
+			SelecteActorFormSelectedStaticMeshActor(para[0]);
+		else
+			UE_LOG(GaoShiPlugin, Log, L"Gaoshi Plugin Need one parameter for this command");
 	});
-	ref.RegisterConsoleCommand(L"GaoShiFilteStaticMechActor", L"", RemoveFoliageInSelectedActorDelegarte);
+	ref.RegisterConsoleCommand(L"GaoShiFilteStaticMeshActor", L"", FilteStaticMeshActorDelegate);
+
+	FilteClassNameAndNameDelegate.BindLambda([](const TArray< FString >& para, UWorld* World) {
+		if(para.Num() == 2)
+			FilteActorClassNameAndActorName(World, para[0], para[1]);
+		else if(para.Num() == 1)
+			FilteActorClassNameAndActorName(World, para[0], L".+");
+		else {
+			UE_LOG(GaoShiPlugin, Log, L"Gaoshi Plugin Need one or tow parameter for this command");
+		}
+	});
+	ref.RegisterConsoleCommand(L"GaoShiFilteClassNameAndName", L"", FilteClassNameAndNameDelegate);
 #endif
 
 

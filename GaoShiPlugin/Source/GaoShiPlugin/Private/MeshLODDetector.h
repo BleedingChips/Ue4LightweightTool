@@ -24,10 +24,4 @@ std::string translate(const FString& fs);
 void ComponentToStateMap(UStaticMeshComponent* component, std::map<std::string, MeshState>& output, size_t count = 1);
 void ComponentToStateMap(USkeletalMeshComponent* component, std::map<std::string, MeshState>& output);
 void ExtractActor(AActor* act, std::map<std::string, MeshState>& static_mesh, std::map<std::string, MeshState>& dymamin_mesh, std::map<std::string, MeshState>& forest);
-
 void DetectObjectLOD(UWorld* world);
-#ifdef WITH_EDITORONLY_DATA
-void FilteStaticMeshActor(const FString& name);
-void MoveSelectedStaticMeshActorToFoliage(UWorld* World);
-void RemoveFoliageInSelectedActor(UWorld* World);
-#endif
