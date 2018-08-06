@@ -124,6 +124,17 @@ std::vector<draw_commend> GeneratorCommand(const std::filesystem::path& path)
 								current_command.EID = 0;
 						}
 					}
+					if (state != 3)
+					{
+						struct da : std::exception
+						{
+							const char* what() const noexcept
+							{
+								return "Unable to recognize";
+							}
+						};
+						throw da{};
+					}
 					all_command.push_back(current_command);
 				}
 

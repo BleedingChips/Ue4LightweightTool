@@ -72,7 +72,7 @@ namespace PO::Tool
 		return { 0, 0 };
 	}
 
-	size_t utf8_require_space(char da)
+	size_t utf8_require_space(char da) noexcept
 	{
 		if ((da & 0xFE) == 0xFC)
 			return 6;
@@ -87,7 +87,21 @@ namespace PO::Tool
 		else if ((da & 0x80) == 0)
 			return 1;
 		else
-			return 1;
+			return 0;
+	}
+
+	bool utf8_check_string(const char* input, size_t avalible, size_t require_space) noexcept
+	{
+		if (require_space != 0 && avalible >= require_space)
+		{
+			for (size_t i = 1; i < require_space; ++i)
+			{
+				if ((input[i] & 0xC0) != 0x80)
+					return false;
+			}
+			return true;
+		}
+		return false;
 	}
 
 	size_t utf16_require_space(char16_t da)

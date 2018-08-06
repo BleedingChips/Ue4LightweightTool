@@ -303,6 +303,15 @@ namespace std
 
 namespace PO::Tool::Lexical
 {
+
+	struct empty_lexical : std::exception
+	{
+		const char* what() const noexcept override
+		{
+			return "the regex capture an empty lexical, which may case depth loop.";
+		}
+	};
+
 	// only avalible in windows
 	struct regex_analyzer_wrapper_utf16
 	{

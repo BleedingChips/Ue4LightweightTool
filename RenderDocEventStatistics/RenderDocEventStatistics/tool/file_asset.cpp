@@ -734,28 +734,136 @@ namespace PO::Tool
 
 namespace PO::Tool::Doc
 {
-
+	size_t calculate_bom_space(Format format)
+	{
+		switch (format)
+		{
+		case Format::UTF8:
+			return 3;
+		case Format::UTF16LE:
+		case Format::UTF16BE:
+			return 2;
+		case Format::UTF32BE:
+		case Format::UTF32LE:
+			return 4;
+		default:
+			return 0;
+		}
+	}
 	namespace Implement
 	{
-		size_t utf8_to_utf16(std::ifstream& file, char16_t* output, size_t output_length) noexcept
+
+		std::optional<size_t> unknow_try_utf8_to_utf16(std::ifstream& file, char16_t* output, size_t output_length) noexcept
 		{
 			assert(file.is_open());
-			char utf8_buffer[6];
+			auto cur = file.tellg();
+			char utf8_buffer[6] = { 0, 0, 0, 0, 0, 0 };
+			file.read(utf8_buffer, 1);
+			size_t size = utf8_require_space(utf8_buffer[0]);
+			if(size >= 2)
+				file.read(utf8_buffer + 1, size - 1);
+			if (utf8_check_string(utf8_buffer, 6, size))
+			{
+				size_t re = utf8s_to_utf16s(utf8_buffer, size, output, output_length).second;
+				if (re != 0)
+					return re;
+				else
+				{
+					file.seekg(cur);
+					return 0;
+				}
+			}
+			else {
+				file.seekg(cur);
+				return std::nullopt;
+			}
+		}
+
+		std::optional<size_t> utf8_to_utf16(std::ifstream& file, char16_t* output, size_t output_length) noexcept
+		{
+			assert(file.is_open());
+			auto cur = file.tellg();
+			char utf8_buffer[6] = { 0, 0, 0, 0, 0, 0 };
 			file.read(utf8_buffer, 1);
 			size_t size = utf8_require_space(utf8_buffer[0]);
 			file.read(utf8_buffer + 1, size - 1);
-			return Tool::utf8s_to_utf16s(utf8_buffer, size, output, output_length).second;
+			if (utf8_check_string(utf8_buffer, 6, size))
+			{
+				size_t re = utf8s_to_utf16s(utf8_buffer, size, output, output_length).second;
+				if (re != 0)
+					return re;
+				else {
+					file.seekg(cur);
+					return 0;
+				}
+			}
+			else {
+				file.seekg(cur);
+				return std::nullopt;
+			}
 		}
 
-		size_t ascii_to_utf16(std::ifstream& file, char16_t* output, size_t output_length) noexcept
+		std::optional<size_t> ascii_to_utf16(std::ifstream& file, char16_t* output, size_t output_length) noexcept
 		{
 			assert(file.is_open());
-			char ascii_buffer[2];
+			auto cur = file.tellg();
+			char ascii_buffer[2] = { 0, 0 };
 			file.read(ascii_buffer, 1);
 			size_t size = ascii_require_space(ascii_buffer[0]);
 			file.read(ascii_buffer + 1, size - 1);
-			return Tool::ascii_to_utf16(ascii_buffer, size, output, output_length).second;
+			auto re = Tool::ascii_to_utf16(ascii_buffer, size, output, output_length).second;
+			if (re != 0)
+				return re;
+			else {
+				file.seekg(cur);
+				return 0;
+			}
 		}
+
+		std::optional<size_t> utf16_le_to_utf16(std::ifstream& file, char16_t* output, size_t output_length) noexcept
+		{
+			assert(file.is_open());
+			auto cur = file.tellg();
+			char16_t buffer[2] = { 0, 0 };
+			file.read(reinterpret_cast<char*>(buffer), sizeof(char16_t));
+			size_t size = utf16_require_space(buffer[0]);
+			if (size == 1)
+			{
+				if (output_length >= 1)
+				{
+					std::memcpy(output, buffer, sizeof(char16_t));
+					return 1;
+				}
+			}
+			else {
+				assert(size == 2);
+				if (output_length >= 2)
+				{
+					std::memcpy(output, buffer, sizeof(char16_t) * 2);
+					return 2;
+				}
+			}
+			return 0;
+		}
+		
+		/*
+		size_t utf16_be_to_utf16(std::ifstream& file, char16_t* output, size_t output_length) noexcept
+		{
+			assert(file.is_open());
+			char16_t buffer[6];
+			file.read(reinterpret_cast<char*>(buffer), sizeof(char16_t));
+			size_t size = utf16_require_space(buffer[0]);
+			if (size == 2)
+				file.read(reinterpret_cast<char*>(buffer + 1), sizeof(char16_t));
+			for (size_t i = 0; i < size; ++i)
+				output[i] = buffer[i];
+			return size;
+		}
+
+		size_t utf32_to_utf16()
+		*/
+
+		
 	}
 
 	loader_utf16::loader_utf16(const std::filesystem::path& path) noexcept 
@@ -763,25 +871,120 @@ namespace PO::Tool::Doc
 	{
 		if (is_open())
 		{
-			m_format = format::UTF8;
-			execute_function = Implement::ascii_to_utf16;
-			/*
-			uint32_t bom_buffer;
+			//m_format = format::UTF8;
+			//execute_function = Implement::ascii_to_utf16;
+			
+			uint32_t bom_buffer = 0;
 			m_file.read(reinterpret_cast<char*>(&bom_buffer), sizeof(uint32_t));
-			if (bom_buffer & ::utf8_filter == ::utf8_bom)
+			if ((bom_buffer & ::utf8_filter) == ::utf8_bom)
 			{
-				m_format = format::UTF8;
+				m_format = Format::UTF8;
 				execute_function = Implement::utf8_to_utf16;
 			}
-			else
+			else if ((bom_buffer & ::utf16_filter) == ::utf16_le_bom)
+			{
+				m_format = Format::UTF16LE;
+				execute_function = Implement::utf16_le_to_utf16;
+			}
+			else if ((bom_buffer & ::utf16_filter) == ::utf16_be_bom)
+			{
+				// need to do
 				assert(false);
-				*/
+			}
+			else if (bom_buffer == ::utf32_le_bom)
+			{
+				// need to do
+				assert(false);
+			}
+			else if (bom_buffer == ::utf32_be_bom)
+			{
+				// need to do
+				assert(false);
+			}
+			else {
+				m_format = Format::UTF8_WITHOUT_BOM;
+				execute_function = Implement::unknow_try_utf8_to_utf16;
+			}
+			m_file.seekg(calculate_bom_space(m_format));
 		}
 	}
 
 	size_t loader_utf16::read_one(char16_t* output, size_t output_length) noexcept
 	{
 		assert(execute_function != nullptr);
-		return execute_function(m_file, output, output_length);
+		if(m_format != Format::UTF8_WITHOUT_BOM)
+			return *execute_function(m_file, output, output_length);
+		else {
+			auto re = execute_function(m_file, output, output_length);
+			if (re.has_value())
+				return *re;
+			else
+			{
+				m_format = Format::ACSII;
+				execute_function = Implement::ascii_to_utf16;
+				return *execute_function(m_file, output, output_length);
+			}
+		}
 	}
+
+	namespace Implement
+	{
+		void utf16_to_utf8(std::ofstream& o, const char16_t* input, size_t length) noexcept
+		{
+			char buffer[6];
+			while (true)
+			{
+				auto p = Tool::utf16s_to_utf8s(input, length, buffer, 6);
+				if (p.first != 0)
+				{
+					assert(p.second != 0);
+					o.write(buffer, p.second);
+					length -= p.first;
+				}
+				else
+					break;
+			}
+		}
+	}
+
+	void writer_utf16::write(const char16_t* input, size_t length) noexcept
+	{
+		assert(execute_function != nullptr);
+		(*execute_function)(m_file, input, length);
+	}
+
+	writer_utf16::writer_utf16(const std::filesystem::path& p, Format format) noexcept : m_file(p, std::ios::binary), m_format(format)
+	{
+		if (m_file.is_open())
+		{
+			switch (format)
+			{
+			case PO::Tool::Doc::UTF8_WITHOUT_BOM:
+				execute_function = Implement::utf16_to_utf8;
+				break;
+			case PO::Tool::Doc::ACSII:
+				assert(false);
+				break;
+			case PO::Tool::Doc::UTF8:
+				assert(false);
+				break;
+			case PO::Tool::Doc::UTF16LE:
+				assert(false);
+				break;
+			case PO::Tool::Doc::UTF16BE:
+				assert(false);
+				break;
+			case PO::Tool::Doc::UTF32BE:
+				assert(false);
+				break;
+			case PO::Tool::Doc::UTF32LE:
+				assert(false);
+				break;
+			default:
+				assert(false);
+				break;
+			}
+		}
+	}
+
 }

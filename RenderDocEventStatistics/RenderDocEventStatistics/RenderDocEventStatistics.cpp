@@ -52,6 +52,7 @@ int main(int args_num, const char** arss)
 	*/
 	
 	
+	
 
 	if (args_num == 1)
 	{
@@ -60,7 +61,23 @@ int main(int args_num, const char** arss)
 	else if(args_num ==2){
 		std::cout << "Start load :" << arss[1] << std::endl;
 		std::wcout << L"Inprocess..." << std::endl;
-		auto result = GeneratorCommand(arss[1]);
+		std::vector<draw_commend> result;
+		try {
+			result = GeneratorCommand(arss[1]);
+		}
+		catch (const std::exception& exp)
+		{
+			std::cout << exp.what() << std::endl;
+			std::wcout << L"Please make sure the the target file is correct." << std::endl;
+			system("pause");
+			return -1;
+		}
+		catch (...)
+		{
+			std::wcout << L"Please make sure the the target file is correct." << std::endl;
+			system("pause");
+			return -1;
+		}
 		std::wcout << L"Complete! Total count :" << result.size() << std::endl;
 		std::cout << "Generator result file ..." << std::endl;
 		Lexical::regex_analyzer_wrapper_utf16 raw{
@@ -69,10 +86,12 @@ int main(int args_num, const char** arss)
 			{u".+", 1}
 		};
 
+		/*
 		Lexical::regex_analyzer_wrapper_utf16 raw2{
 			{ u"WorldGridMaterial\\s\\S+", 3 },{ u"M\\S+\\s\\S+", 6 },
 			{ u".+", 1 }
 		};
+		*/
 
 		struct DrawCommandState
 		{
@@ -148,10 +167,10 @@ int main(int args_num, const char** arss)
 				if (raw.token() != 1)
 				{
 					auto& name = *levels.rbegin();
-					raw2.set_string(name);
-					raw2.generate_token();
-					if (raw2.token() != 1)
-					{
+					//raw2.set_string(name);
+					//raw2.generate_token();
+					//if (raw2.token() != 1)
+					//{
 						auto ite2 = all_data.find(name);
 						if (ite2 == all_data.end())
 							ite2 = all_data.insert({ name, ElementState{} }).first;
@@ -167,7 +186,7 @@ int main(int args_num, const char** arss)
 							ite2->second.insert({ ite.name, {1, ite.duration } });
 						}
 						*/
-					}
+					//}
 				}
 			}
 		}

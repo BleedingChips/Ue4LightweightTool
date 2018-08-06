@@ -460,7 +460,7 @@ namespace PO::Tool
 namespace PO::Tool::Lexical
 {
 	stream_analyzer_wrapper_utf16::stream_analyzer_wrapper_utf16(
-		std::function<size_t(char16_t*, size_t avalible)> generator,
+		std::function<size_t(char16_t*, size_t)> generator,
 		std::function<result(const char16_t*, size_t)> analyzer
 	) noexcept :
 		m_generator(std::move(generator)), m_analyzer(std::move(analyzer)), m_last_ope(Cursor::Next), 
@@ -617,7 +617,7 @@ namespace PO::Tool::Lexical
 	{
 		m_regex.reserve(il.size());
 		for (auto& ite : il)
-			m_regex.push_back({ std::wregex(reinterpret_cast<const wchar_t*>(std::get<0>(ite))), std::get<1>(ite) });
+			m_regex.push_back({ std::wregex(reinterpret_cast<const wchar_t*>(std::get<0>(ite)), std::regex::optimize), std::get<1>(ite) });
 	}
 
 	void regex_analyzer_wrapper_utf16::set_string(const std::u16string& string)
@@ -636,6 +636,8 @@ namespace PO::Tool::Lexical
 				std::wsmatch match;
 				if (std::regex_search(m_cursor, m_string.cend(), match, std::get<0>(ite), std::regex_constants::match_flag_type::match_continuous))
 				{
+					if (match[0].second == match[0].first)
+						throw empty_lexical{};
 					m_cursor = match[0].second;
 					m_view = std::u16string_view(reinterpret_cast<const char16_t*>(&(*match[0].first)), match[0].second - match[0].first);
 					m_token = std::get<1>(ite);
@@ -645,28 +647,6 @@ namespace PO::Tool::Lexical
 			throw unknow_lecical{};
 		}
 		return false;
-
-
-		/*
-		m_match = std::wsmatch{};
-
-		if (m_line_extractor.string().empty())
-		{
-			bool finded = false;
-			while (m_line_extractor.generate_token()) {
-				if (m_line_extractor.cast_token<line_analyzer::Token>() == line_analyzer::Token::Line)
-				{
-					finded = true;
-					break;
-				}
-			}
-			if (finded)
-			{
-
-			}
-		}
-		return false;
-		*/
 	}
 
 }

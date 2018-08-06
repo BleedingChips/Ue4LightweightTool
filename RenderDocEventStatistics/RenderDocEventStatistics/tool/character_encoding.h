@@ -9,7 +9,8 @@ namespace PO::Tool
 
 	size_t ascii_require_space(char da) noexcept;
 
-	size_t utf8_require_space(char da);
+	size_t utf8_require_space(char da) noexcept;
+	bool utf8_check_string(const char* input, size_t avalible, size_t require_space) noexcept;
 	size_t utf16_require_space(char16_t da);
 
 	size_t utf32_to_utf8_require_space(char32_t input);

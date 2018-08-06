@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include <optional>
 namespace PO::Tool
 {
 
@@ -197,9 +198,10 @@ namespace PO::Tool
 
 namespace PO::Tool::Doc
 {
-	enum format
+	enum Format
 	{
-		UNKNOW,
+		UTF8_WITHOUT_BOM,
+		ACSII,
 		UTF8,
 		UTF16LE,
 		UTF16BE,
@@ -215,9 +217,27 @@ namespace PO::Tool::Doc
 		size_t read_one(char16_t* output, size_t output_length) noexcept;
 		loader_utf16(const std::filesystem::path& path) noexcept;
 	private:
-		size_t (*execute_function)(std::ifstream& file, char16_t*, size_t output_length) noexcept = nullptr;
+		std::optional<size_t> (*execute_function)(std::ifstream& file, char16_t*, size_t output_length) noexcept = nullptr;
 		std::ifstream m_file;
-		format m_format = format::UNKNOW;
+		Format m_format = Format::UTF8_WITHOUT_BOM;
+	};
+
+	struct writer_utf16
+	{
+		bool is_open() const noexcept { return m_file.is_open(); }
+		void close() noexcept { m_file.close(); }
+		void write(const char16_t* output, size_t output_length) noexcept;
+		template<typename T>
+		writer_utf16& operator<<(const std::basic_string<char32_t, T>& output)
+		{
+			write(output.data(), output.size());
+			return *this;
+		}
+		writer_utf16(const std::filesystem::path&, Format format) noexcept;
+	private:
+		std::ofstream m_file;
+		Format m_format = Format::UTF8_WITHOUT_BOM;
+		void(*execute_function)(std::ofstream& o, const char16_t* input, size_t length) noexcept = nullptr;
 	};
 }
 

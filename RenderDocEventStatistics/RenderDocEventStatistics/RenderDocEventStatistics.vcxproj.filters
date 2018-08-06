@@ -18,31 +18,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tool\assert.cpp">
-      <Filter>tool</Filter>
-    </ClCompile>
     <ClCompile Include="tool\character_encoding.cpp">
       <Filter>tool</Filter>
     </ClCompile>
     <ClCompile Include="tool\file_asset.cpp">
       <Filter>tool</Filter>
     </ClCompile>
-    <ClCompile Include="tool\math.cpp">
-      <Filter>tool</Filter>
-    </ClCompile>
-    <ClCompile Include="tool\memory_pool.cpp">
-      <Filter>tool</Filter>
-    </ClCompile>
-    <ClCompile Include="tool\path_system.cpp">
-      <Filter>tool</Filter>
-    </ClCompile>
     <ClCompile Include="tool\script_analyze.cpp">
-      <Filter>tool</Filter>
-    </ClCompile>
-    <ClCompile Include="tool\simple_command_analyzer.cpp">
-      <Filter>tool</Filter>
-    </ClCompile>
-    <ClCompile Include="tool\tool.cpp">
       <Filter>tool</Filter>
     </ClCompile>
     <ClCompile Include="RenderDocEventStatistics.cpp">
@@ -53,55 +35,17 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="tool\asset.h">
-      <Filter>tool</Filter>
-    </ClInclude>
-    <ClInclude Include="tool\auto_adapter.h">
-      <Filter>tool</Filter>
-    </ClInclude>
     <ClInclude Include="tool\character_encoding.h">
       <Filter>tool</Filter>
     </ClInclude>
     <ClInclude Include="tool\file_asset.h">
       <Filter>tool</Filter>
     </ClInclude>
-    <ClInclude Include="tool\intrusive_ptr.h">
-      <Filter>tool</Filter>
-    </ClInclude>
-    <ClInclude Include="tool\mail.h">
-      <Filter>tool</Filter>
-    </ClInclude>
-    <ClInclude Include="tool\math.h">
-      <Filter>tool</Filter>
-    </ClInclude>
-    <ClInclude Include="tool\memory_pool.h">
-      <Filter>tool</Filter>
-    </ClInclude>
-    <ClInclude Include="tool\path_system.h">
-      <Filter>tool</Filter>
-    </ClInclude>
     <ClInclude Include="tool\script_analyze.h">
-      <Filter>tool</Filter>
-    </ClInclude>
-    <ClInclude Include="tool\simple_command_analyzer.h">
-      <Filter>tool</Filter>
-    </ClInclude>
-    <ClInclude Include="tool\tmp.h">
-      <Filter>tool</Filter>
-    </ClInclude>
-    <ClInclude Include="tool\tmpcall.h">
-      <Filter>tool</Filter>
-    </ClInclude>
-    <ClInclude Include="tool\tool.h">
       <Filter>tool</Filter>
     </ClInclude>
     <ClInclude Include="GeneratorCommand.h">
       <Filter>头文件</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="tool\readme.md">
-      <Filter>tool</Filter>
-    </None>
   </ItemGroup>
 </Project>
