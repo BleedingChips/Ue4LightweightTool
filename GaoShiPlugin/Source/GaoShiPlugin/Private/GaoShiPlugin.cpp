@@ -7,51 +7,132 @@
 #include "InstancedFoliageActor.h"
 #include "MeshLODDetector.h"
 #include "SelectionFilter.h"
+#include "InfoRecord.h"
 #include <fstream>
 #include <map>
 #define LOCTEXT_NAMESPACE "FGaoShiPluginModule"
 
 DECLARE_LOG_CATEGORY_EXTERN(GaoShiPlugin, Log, All);
 DEFINE_LOG_CATEGORY(GaoShiPlugin);
-FConsoleCommandWithWorldAndArgsDelegate DetectObjectLODDelegate;
 
-FConsoleCommandWithWorldAndArgsDelegate FilteStaticMeshActorDelegate;
 
-FConsoleCommandWithWorldAndArgsDelegate FilteClassNameAndNameDelegate;
+FConsoleCommandWithWorldDelegate DetectObjectLODDelegate;
+FConsoleCommandWithArgsDelegate FilterStaticMeshDelegate;
+FConsoleCommandWithArgsDelegate FilterActorClassNameDelegate;
+FConsoleCommandWithArgsDelegate FilterActorDisplayNameDelegate;
+FConsoleCommandWithArgsDelegate FilterActorIDNameDelegate;
+FConsoleCommandDelegate StoreSelectedActorDelegate;
+FConsoleCommandDelegate RestoreSelectedActorDelegate;
+FConsoleCommandWithWorldAndArgsDelegate DebugCommandLineOutputDelegate;
+FConsoleCommandWithWorldAndArgsDelegate CopySeletionActorNameDelegate;
+FConsoleCommandWithWorldDelegate CopyCurrentPositionDelegate;
+FConsoleCommandWithArgsDelegate MoveToPositionDelegate;
+//FConsoleCommandWithWorldAndArgsDelegate MoveToRecordedPostionDelegate;
+//FConsoleCommandWithWorldAndArgsDelegate CopyRecordedPositionDelegate;
 
 void FGaoShiPluginModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	auto& ref = IConsoleManager::Get();
 
-	DetectObjectLODDelegate.BindLambda([](const TArray< FString >&, UWorld* World) {
+	DetectObjectLODDelegate.BindLambda([](UWorld* World) {
 		DetectObjectLOD(World);
 	});
-	ref.RegisterConsoleCommand(L"GaoShiDetectObjectLod", L"", DetectObjectLODDelegate);
+	ref.RegisterConsoleCommand(L"GSDetectObjectLod", L"", DetectObjectLODDelegate);
 
 #ifdef WITH_EDITORONLY_DATA
-	FilteStaticMeshActorDelegate.BindLambda([](const TArray< FString >& para, UWorld* World) {
+	FilterStaticMeshDelegate.BindLambda([](const TArray< FString >& para) {
 		if (para.Num() == 1)
-			SelecteActorFormSelectedStaticMeshActor(para[0]);
+			FilterStaticMesh(para[0]);
 		else
-			UE_LOG(GaoShiPlugin, Log, L"Gaoshi Plugin Need one parameter for this command");
+			UE_LOG(GaoShiPlugin, Log, L"GSFilterStaticMesh need one parameter for this command");
 	});
-	ref.RegisterConsoleCommand(L"GaoShiFilteStaticMeshActor", L"", FilteStaticMeshActorDelegate);
+	ref.RegisterConsoleCommand(L"GSFilterStaticMesh", L"", FilterStaticMeshDelegate);
 
-	FilteClassNameAndNameDelegate.BindLambda([](const TArray< FString >& para, UWorld* World) {
-		if(para.Num() == 2)
-			FilteActorClassNameAndActorName(World, para[0], para[1]);
-		else if(para.Num() == 1)
-			FilteActorClassNameAndActorName(World, para[0], L".+");
+	FilterActorClassNameDelegate.BindLambda([](const TArray< FString >& para) {
+		if(para.Num() == 1)
+			FilterActorClassName(para[0]);
 		else {
-			UE_LOG(GaoShiPlugin, Log, L"Gaoshi Plugin Need one or tow parameter for this command");
+			UE_LOG(GaoShiPlugin, Log, L"GSFilterActorClassName need one parameter for this command");
 		}
 	});
-	ref.RegisterConsoleCommand(L"GaoShiFilteClassNameAndName", L"", FilteClassNameAndNameDelegate);
+	ref.RegisterConsoleCommand(L"GSFilterActorClassName", L"", FilterActorClassNameDelegate);
+
+	FilterActorDisplayNameDelegate.BindLambda([](const TArray< FString >& para) {
+		if (para.Num() == 1)
+			FilterActorDisplayName(para[0]);
+		else {
+			UE_LOG(GaoShiPlugin, Log, L"GSFilterActorDisplayName need one parameter for this command");
+		}
+	});
+	ref.RegisterConsoleCommand(L"GSFilterActorDisplayName", L"", FilterActorDisplayNameDelegate);
+
+	FilterActorIDNameDelegate.BindLambda([](const TArray< FString >& para) {
+		if (para.Num() == 1)
+			FilterActorIDName(para[0]);
+		else {
+			UE_LOG(GaoShiPlugin, Log, L"GSFilterActorIDName need one parameter for this command");
+		}
+	});
+	ref.RegisterConsoleCommand(L"GSFilterActorIDName", L"", FilterActorIDNameDelegate);
+
+	CopySeletionActorNameDelegate.BindLambda([](const TArray< FString >& para, UWorld* World) {
+		FString total;
+		for (size_t index = 0; index < para.Num(); ++index)
+		{
+			if (index == 0)
+				total += para[index];
+			else
+				total += FString(L" ") + para[index];
+		}
+		CopySelectionActorToClioboard(total);
+	});
+	ref.RegisterConsoleCommand(L"GSCopySelectedActorName", L"", CopySeletionActorNameDelegate);
+
+	MoveToPositionDelegate.BindLambda([](const TArray< FString >& para) {
+		if (para.Num() < 1)
+		{
+			UE_LOG(GaoShiPlugin, Log, L"GSMoveToPosition need at last one parameter for this command");
+		}
+		else {
+			FString total;
+			for (size_t index = 0; index < para.Num(); ++index)
+			{
+				if (index == 0)
+					total += para[index];
+				else
+					total += FString(L" ") + para[index];
+			}
+			MoveToPosition(total);
+		}
+	});
+	ref.RegisterConsoleCommand(L"GSMoveToPosition", L"", MoveToPositionDelegate);
+
+	StoreSelectedActorDelegate.BindLambda([]() {
+		StoreSelectedActor();
+	});
+	ref.RegisterConsoleCommand(L"GSStoreSelectedActor", L"", StoreSelectedActorDelegate);
+
+	RestoreSelectedActorDelegate.BindLambda([]() {
+		RestoreSelectedActor();
+	});
+	ref.RegisterConsoleCommand(L"GSRestoreSelectedActor", L"", RestoreSelectedActorDelegate);
+
 #endif
 
+	CopyCurrentPositionDelegate.BindLambda([](UWorld* World) {
+		CopyCurrentPosition(World);
+	});
+	ref.RegisterConsoleCommand(L"GSCopyCurrentPosition", L"", CopyCurrentPositionDelegate);
 
-	
+	DebugCommandLineOutputDelegate.BindLambda([](const TArray< FString >& para, UWorld* World)
+	{
+		FString Result;
+		for (size_t i = 0; i < para.Num(); ++i)
+			Result += FString{ L"<" } +para[i] + FString{ L">," };
+		UE_LOG(GaoShiPlugin, Log, L"%s", *Result);
+	});
+	ref.RegisterConsoleCommand(L"GSDebugCommandLineOutput", L"", DebugCommandLineOutputDelegate);
 	
 }
 

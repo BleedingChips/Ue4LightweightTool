@@ -1,6 +1,6 @@
 #include "SelectionFilter.h"
-
-
+#include <regex>
+#include "ScriptionAnalyze.h"
 
 
 #ifdef WITH_EDITORONLY_DATA
@@ -98,9 +98,10 @@ void MoveStaticMeshActorToFoliage(UWorld* World, FString target_mesh_name)
 
 #ifdef WITH_EDITORONLY_DATA
 
-void SelecteActorFormSelectedStaticMeshActor(const FString& string) noexcept
+void FilterStaticMesh(const FString& string) noexcept
 {
-	FRegexPattern pattern(string);
+	std::wregex pattern(*string, std::regex::optimize);
+	//FRegexPattern pattern(string);
 	USelection* selection = GEditor->GetSelectedActors();
 	if (IsValid(selection))
 	{
@@ -122,9 +123,8 @@ void SelecteActorFormSelectedStaticMeshActor(const FString& string) noexcept
 						auto mesh = command->GetStaticMesh();
 						if (mesh != nullptr)
 						{
-							FRegexMatcher regMatcher(pattern, mesh->GetName());
-							regMatcher.SetLimits(0, mesh->GetName().Len());
-							if(regMatcher.FindNext())
+							FString Name = mesh->GetName();
+							if (std::regex_match(*Name, *Name + Name.Len(), pattern))
 								GEditor->SelectActor(result, true, true, true);
 						}
 					}
@@ -133,10 +133,10 @@ void SelecteActorFormSelectedStaticMeshActor(const FString& string) noexcept
 		}
 	}
 }
-void FilteActorClassNameAndActorName(UWorld* world, const FString& class_name, const FString& actor_name) noexcept
+
+void FilterActorClassName(const FString& string) noexcept
 {
-	FRegexPattern cn(class_name);
-	FRegexPattern an(actor_name);
+	std::wregex pattern(*string, std::regex::optimize);
 	USelection* selection = GEditor->GetSelectedActors();
 	if (IsValid(selection))
 	{
@@ -147,23 +147,88 @@ void FilteActorClassNameAndActorName(UWorld* world, const FString& class_name, c
 		for (size_t i = 0; i < count; ++i)
 		{
 			auto ptr = object_array[i];
-			if (ptr.IsValid())
+			AActor* ac = Cast<AActor>(ptr.Get());
+			if (IsValid(ac))
 			{
 				FName N = ptr->GetClass()->GetFName();
 				FString ClassName = N.ToString();
-				FRegexMatcher cn_match(cn, ClassName);
-				if (cn_match.FindNext() && cn_match.GetMatchBeginning() == 0 && cn_match.GetMatchEnding() == ClassName.Len())
-				{
-					FString DisplayName = UKismetSystemLibrary::GetDisplayName(ptr.Get());
-					FRegexMatcher dm_match(an, DisplayName);
-					if (dm_match.FindNext() && dm_match.GetMatchBeginning() == 0 && cn_match.GetMatchEnding() == ClassName.Len())
-					{
-						AActor* ac = Cast<AActor>(ptr.Get());
-						if (IsValid(ac))
-							GEditor->SelectActor(ac, true, true, true);
-					}
-				}
+				if (std::regex_match(*ClassName, *ClassName + ClassName.Len(), pattern))
+					GEditor->SelectActor(ac, true, true, true);
 			}
+		}
+	}
+}
+
+void FilterActorDisplayName(const FString& string) noexcept
+{
+	std::wregex pattern(*string, std::regex::optimize);
+	USelection* selection = GEditor->GetSelectedActors();
+	if (IsValid(selection))
+	{
+		TArray<TWeakObjectPtr<>> object_array;
+		selection->GetSelectedObjects(object_array);
+		GEditor->SelectNone(false, true, false);
+		auto count = object_array.Num();
+		for (size_t i = 0; i < count; ++i)
+		{
+			auto ptr = object_array[i];
+			AActor* ac = Cast<AActor>(ptr.Get());
+			if (IsValid(ac))
+			{
+				FString DisplayName = UKismetSystemLibrary::GetDisplayName(ptr.Get());
+				if (std::regex_match(*DisplayName, *DisplayName + DisplayName.Len(), pattern))
+					GEditor->SelectActor(ac, true, true, true);
+			}
+		}
+	}
+}
+
+void FilterActorIDName(const FString& string) noexcept
+{
+	std::wregex pattern(*string, std::regex::optimize);
+	USelection* selection = GEditor->GetSelectedActors();
+	if (IsValid(selection))
+	{
+		TArray<TWeakObjectPtr<>> object_array;
+		selection->GetSelectedObjects(object_array);
+		GEditor->SelectNone(false, true, false);
+		auto count = object_array.Num();
+		for (size_t i = 0; i < count; ++i)
+		{
+			auto ptr = object_array[i];
+			AActor* ac = Cast<AActor>(ptr.Get());
+			if (IsValid(ac))
+			{
+				FString IDName = ptr->GetName();
+				if (std::regex_match(*IDName, *IDName + IDName.Len(), pattern))
+					GEditor->SelectActor(ac, true, true, true);
+			}
+		}
+	}
+}
+
+TArray<TWeakObjectPtr<>> storage_object;
+void StoreSelectedActor() noexcept
+{
+	USelection* selection = GEditor->GetSelectedActors();
+	if (IsValid(selection))
+	{
+		TArray<TWeakObjectPtr<>> object_array;
+		selection->GetSelectedObjects(object_array);
+		storage_object = std::move(object_array);
+	}
+}
+
+void RestoreSelectedActor() noexcept
+{
+	GEditor->SelectNone(false, true, false);
+	for (auto& ite : storage_object)
+	{
+		if (ite.IsValid())
+		{
+			AActor* act = Cast<AActor>(ite.Get());
+			if (act != nullptr)
+				GEditor->SelectActor(act, true, true, true);
 		}
 	}
 }

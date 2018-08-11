@@ -8,6 +8,18 @@ public class GaoShiPlugin : ModuleRules
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
+        if (Target.Type == TargetType.Editor)
+        {
+            PublicDependencyModuleNames.AddRange(
+            new string[] { "UnrealED" });
+            PublicIncludePaths.AddRange(
+            new string[] {
+                "UnrealED/Public"
+			}
+            );
+        }
+
+
         PublicIncludePaths.AddRange(
 			new string[] {
 				"GaoShiPlugin/Public"
@@ -24,17 +36,14 @@ public class GaoShiPlugin : ModuleRules
 			}
 			);
 
-        if (Target.Type == TargetType.Editor)
-        {
-            PublicDependencyModuleNames.AddRange(
-            new string[] { "UnrealED" });
-        }
+       
 
         PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
 				"Core",
                 "Foliage",
+                "ApplicationCore",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
