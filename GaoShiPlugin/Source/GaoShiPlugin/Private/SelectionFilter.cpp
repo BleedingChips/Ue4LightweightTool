@@ -1,6 +1,5 @@
 #include "SelectionFilter.h"
 #include <regex>
-#include "ScriptionAnalyze.h"
 
 
 #ifdef WITH_EDITORONLY_DATA
@@ -125,12 +124,13 @@ void FilterStaticMesh(const FString& string) noexcept
 						{
 							FString Name = mesh->GetName();
 							if (std::regex_match(*Name, *Name + Name.Len(), pattern))
-								GEditor->SelectActor(result, true, true, true);
+								GEditor->SelectActor(result, true, false);
 						}
 					}
 				}
 			}
 		}
+		GEditor->SelectActor(nullptr, true, true, true, true);
 	}
 }
 
@@ -153,9 +153,10 @@ void FilterActorClassName(const FString& string) noexcept
 				FName N = ptr->GetClass()->GetFName();
 				FString ClassName = N.ToString();
 				if (std::regex_match(*ClassName, *ClassName + ClassName.Len(), pattern))
-					GEditor->SelectActor(ac, true, true, true);
+					GEditor->SelectActor(ac, true, false);
 			}
 		}
+		GEditor->SelectActor(nullptr, true, true, true, true);
 	}
 }
 
@@ -177,9 +178,10 @@ void FilterActorDisplayName(const FString& string) noexcept
 			{
 				FString DisplayName = UKismetSystemLibrary::GetDisplayName(ptr.Get());
 				if (std::regex_match(*DisplayName, *DisplayName + DisplayName.Len(), pattern))
-					GEditor->SelectActor(ac, true, true, true);
+					GEditor->SelectActor(ac, true, false);
 			}
 		}
+		GEditor->SelectActor(nullptr, true, true, true, true);
 	}
 }
 
@@ -201,9 +203,10 @@ void FilterActorIDName(const FString& string) noexcept
 			{
 				FString IDName = ptr->GetName();
 				if (std::regex_match(*IDName, *IDName + IDName.Len(), pattern))
-					GEditor->SelectActor(ac, true, true, true);
+					GEditor->SelectActor(ac, true, false);
 			}
 		}
+		GEditor->SelectActor(nullptr, true, true, true, true);
 	}
 }
 
@@ -228,8 +231,9 @@ void RestoreSelectedActor() noexcept
 		{
 			AActor* act = Cast<AActor>(ite.Get());
 			if (act != nullptr)
-				GEditor->SelectActor(act, true, true, true);
+				GEditor->SelectActor(act, true, false);
 		}
 	}
+	GEditor->SelectActor(nullptr, true, true, true, true);
 }
 #endif

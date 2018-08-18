@@ -1,10 +1,14 @@
 搞事用插件
 ---
 
+* 请先保证有VS2017的最新版本
+* 打开GaoShiProject/ThirdPartProject.sln，在Release/Win64环境下编译.lib。
+* 按正常流程编译游戏
+
 命令列表：
-* GSDetectObjectLod
-    `GSDetectObjectLod`
-    统计当前Level的所有`静态网格`，`骨骼网格`，`植被模型` 的 `使用数量`，`移动属性`，`阴影属性`，以及在各LOD下的`面数`，`Section数`和`ScreenSize`，并保存到Save/Log/[LevelName].csv下。
+* GSCheckStaticMesh
+    `GSCheckStaticMesh`
+    统计当前Level的所有AStaticMeshActor和植被所用的StaticMesh的 `使用数量`，以及在各LOD下的`面数`，`Section数`和`ScreenSize`，并保存到Save/Log/[LevelName].csv下。
 
 * GSFilteStaticMeshActor 
     `GSFilteStaticMeshActor [RegexMeshName]`

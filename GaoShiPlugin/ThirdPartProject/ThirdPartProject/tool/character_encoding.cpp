@@ -1,9 +1,60 @@
-#include "Encoding.h"
+#include "character_encoding.h"
+#include <assert.h>
+
+
+
+#ifdef _WIN32
+#include <windows.h>
+
+namespace PO 
+{
+	namespace Encoding
+	{
+		std::pair<size_t, size_t> ansi_to_utf16(const char* input, size_t input_length, char16_t* output, size_t output_length, uint32_t code_page) noexcept
+		{
+			if (input_length != 0)
+			{
+				size_t require_space = ansi_require_space(input[0]);
+
+				if (input_length >= require_space)
+				{
+					size_t result = MultiByteToWideChar(code_page, 0, input, static_cast<int>(require_space), reinterpret_cast<wchar_t*>(output), static_cast<int>(output_length));
+					return { require_space, result };
+				}
+			}
+			return { 0, 0 };
+		}
+		std::pair<size_t, size_t> utf16_to_ansi(const char16_t* input, size_t input_length, char* output, size_t output_length, uint32_t code_page) noexcept
+		{
+			if (input_length != 0)
+			{
+				size_t require_space = utf16_require_space(input[0]);
+				BOOL unchangleble = true;
+				if (input_length >= require_space)
+				{
+					size_t result = WideCharToMultiByte(code_page, 0, reinterpret_cast<const wchar_t*>(input), static_cast<int>(require_space), output, static_cast<int>(output_length), "?", &unchangleble);
+					//size_t result = MultiByteToWideChar(CP_ACP, 0, input, require_space, reinterpret_cast<wchar_t*>(output), output_length);
+					return { require_space, result };
+				}
+			}
+			return { 0, 0 };
+		}
+	}
+}
+
+
+#endif
+
 namespace PO
 {
-	namespace Tool
+	namespace Encoding
 	{
-		size_t utf8_require_space(char da)
+		size_t ansi_require_space(char da) noexcept
+		{
+			return static_cast<uint8_t>(da) > 127 ? 2 : 1;
+		}
+
+		size_t utf8_require_space(char da) noexcept
 		{
 			if ((da & 0xFE) == 0xFC)
 				return 6;
@@ -19,6 +70,20 @@ namespace PO
 				return 1;
 			else
 				return 0;
+		}
+
+		bool utf8_check_string(const char* input, size_t avalible, size_t require_space) noexcept
+		{
+			if (require_space != 0 && avalible >= require_space)
+			{
+				for (size_t i = 1; i < require_space; ++i)
+				{
+					if ((input[i] & 0xC0) != 0x80)
+						return false;
+				}
+				return true;
+			}
+			return false;
 		}
 
 		size_t utf16_require_space(char16_t da)
@@ -188,7 +253,41 @@ namespace PO
 			return { _1, _2 };
 		}
 
+		std::pair<size_t, size_t> ansis_to_utf16s(const char* input, size_t input_length, char16_t* output, size_t output_length, uint32_t code_page) noexcept
+		{
+			size_t utf16_index = 0;
+			size_t  ansi_index = 0;
+			while (utf16_index < input_length)
+			{
+				auto result = ansi_to_utf16(input + ansi_index, input_length - ansi_index, output + utf16_index, output_length - utf16_index, code_page);
+				if (result.second != 0)
+				{
+					utf16_index += result.first;
+					ansi_index += result.second;
+				}
+				else
+					break;
+			}
+			return { ansi_index, utf16_index };
+		}
 
+		std::pair<size_t, size_t> utf16s_to_asciis(const char16_t* input, size_t input_length, char* output, size_t output_length, uint32_t code_page) noexcept
+		{
+			size_t utf16_index = 0;
+			size_t ansi_index = 0;
+			while (utf16_index < input_length)
+			{
+				auto result = utf16_to_ansi(input + utf16_index, input_length - utf16_index, output + ansi_index, output_length - ansi_index, code_page);
+				if (result.second != 0)
+				{
+					utf16_index += result.first;
+					ansi_index += result.second;
+				}
+				else
+					break;
+			}
+			return { utf16_index,  ansi_index };
+		}
 
 		std::pair<size_t, size_t> utf32s_to_utf8s(const char32_t* input, size_t input_size, char* output, size_t output_size) noexcept
 		{
@@ -196,7 +295,7 @@ namespace PO
 			size_t utf8_used = 0;
 			if (input_size >= 0)
 			{
-				for (size_t index = 0; index < input_size; ++index)
+				for (; index < input_size; ++index)
 				{
 					size_t used = utf32_to_utf8(input[index], output + utf8_used, output_size);
 					if (used != 0)
@@ -280,7 +379,7 @@ namespace PO
 		std::u32string utf8s_to_utf32s(const std::string& input)
 		{
 			std::u32string temporary(input.size(), U'\0');
-			auto pair = utf8s_to_utf32s(input.data(), input.size(), &temporary[0], temporary.size());
+			auto pair = utf8s_to_utf32s(input.data(), input.size(), temporary.data(), temporary.size());
 			temporary.resize(pair.second);
 			return temporary;
 		}
@@ -288,7 +387,7 @@ namespace PO
 		std::string utf32s_to_utf8s(const std::u32string& input)
 		{
 			std::string temporary(input.size() * 6, u'\0');
-			auto pair = utf32s_to_utf8s(input.data(), input.size(), &temporary[0], temporary.size());
+			auto pair = utf32s_to_utf8s(input.data(), input.size(), temporary.data(), temporary.size());
 			temporary.resize(pair.second);
 			return temporary;
 		}
@@ -296,7 +395,7 @@ namespace PO
 		std::string utf16s_to_utf8s(const std::u16string& input)
 		{
 			std::string temporary(input.size() * 4, u'\0');
-			auto pair = utf16s_to_utf8s(input.data(), input.size(), &temporary[0], temporary.size());
+			auto pair = utf16s_to_utf8s(input.data(), input.size(), temporary.data(), temporary.size());
 			temporary.resize(pair.second);
 			return temporary;
 		}
@@ -304,7 +403,7 @@ namespace PO
 		std::u16string utf8s_to_utf16s(const std::string& input)
 		{
 			std::u16string temporary(input.size(), u'\0');
-			auto pair = utf8s_to_utf16s(input.data(), input.size(), &temporary[0], temporary.size());
+			auto pair = utf8s_to_utf16s(input.data(), input.size(), temporary.data(), temporary.size());
 			temporary.resize(pair.second);
 			return temporary;
 		}

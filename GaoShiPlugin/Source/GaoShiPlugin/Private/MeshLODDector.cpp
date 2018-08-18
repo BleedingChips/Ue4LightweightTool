@@ -1,209 +1,182 @@
 ﻿#include "MeshLODDetector.h"
 #include "Classes/Animation/SkeletalMeshActor.h"
-#include <fstream>
-std::string translate(const FString& fs)
+#include "document_interface.h"
+#include <set>
+#include <sstream>
+struct LODState
 {
-	std::string temporary(fs.Len() * 4, '\0');
-	auto pair = PO::Tool::utf16s_to_utf8s(reinterpret_cast<const char16_t*>(*fs), fs.Len(), &temporary[0], fs.Len() * 4);
-	temporary.resize(pair.second);
-	return temporary;
-}
+	int32 triangle;
+	int32 section;
+	float screne_rate;
+};
 
-void AddMeshCount(EComponentMobility::Type type, bool case_shadow, MeshState& state, size_t count = 1)
+std::pair<std::vector<LODState>, bool> LoadMeshLoad(UStaticMesh* SM)
 {
-	state.total_count += count;
-	switch (type)
+	std::vector<LODState> tem;
+	size_t mesh_count = SM->GetNumLODs();
+	for (size_t i = 0; i < mesh_count; ++i)
 	{
-	case EComponentMobility::Type::Movable:
-		state.movable_count += count;
-		break;
-	case EComponentMobility::Type::Stationary:
-		state.stationary_count += count;
-		break;
+		const FStaticMeshLODResources& res = SM->GetLODForExport(i);
+		tem.push_back({ LODState{ res.GetNumTriangles(), res.Sections.Num(), SM->SourceModels[i].ScreenSize } });
 	}
-	if (case_shadow)
-		state.cast_shadow_count += count;
+	std::set<FString> m_material_name;
+	for (auto& ite : SM->StaticMaterials)
+	{
+		auto name = ite.MaterialInterface->GetName();
+		if (m_material_name.find(name) != m_material_name.end())
+			return { std::move(tem), true };
+		else
+			m_material_name.insert(name);
+	}
+	return { std::move(tem), false };
 }
 
-void ComponentToStateMap(UStaticMeshComponent* component, std::map<std::string, MeshState>& output, size_t count)
+struct MeshState
 {
-	if (component != nullptr)
+	uint32_t m_actor_count = 0;
+	uint32_t m_foliage_count = 0;
+	bool m_repeat_material = false;
+	std::vector<LODState> m_all_state;
+};
+
+
+template<typename T>
+std::wstring NumberToString(T value)
+{
+	static std::wstringstream wss;
+	wss.clear();
+	std::wstring buffer;
+	wss << value;
+	wss >> buffer;
+	return buffer;
+}
+
+void CheckStaticMesh(UWorld* World)
+{
+	std::map<FString, MeshState> m_all_mesh;
+	TActorIterator<AActor> all_actor{ World };
+	for (; all_actor; ++all_actor)
 	{
-		const UStaticMesh* mesh = component->GetStaticMesh();
-		EComponentMobility::Type mobility = component->Mobility;
-		bool cast_shadow = component->CastShadow;
-		if (mesh != nullptr)
+		auto static_mesh_actor = Cast<AStaticMeshActor>(*all_actor);
+		if (IsValid(static_mesh_actor) && IsValid(static_mesh_actor->GetStaticMeshComponent()) )
 		{
-			std::string name = translate(mesh->GetName());
-			auto ite = output.find(name);
-			if (ite == output.end())
+			auto component = static_mesh_actor->GetStaticMeshComponent();
+			if (IsValid(component))
 			{
-				ite = output.insert({ name, MeshState{ } }).first;
-				size_t mesh_count = mesh->GetNumLODs();
-				for (size_t i = 0; i < mesh_count; ++i)
+				auto mesh = component->GetStaticMesh();
+				if (mesh != nullptr)
 				{
-					const FStaticMeshLODResources& res = mesh->GetLODForExport(i);
-					ite->second.lod_state.push_back({ LODState{ res.GetNumTriangles(), res.Sections.Num(), mesh->SourceModels[i].ScreenSize } });
+					auto name = mesh->GetName();
+					auto fine = m_all_mesh.find(name);
+					if (fine == m_all_mesh.end())
+					{
+						fine = m_all_mesh.insert({ name, MeshState {} }).first;
+						auto result = LoadMeshLoad(mesh);
+						fine->second.m_repeat_material = result.second;
+						fine->second.m_all_state = std::move(result.first);
+					}
+					fine->second.m_actor_count += 1;
 				}
 			}
-			AddMeshCount(component->Mobility, component->CastShadow, ite->second, count);
-		}
-	}
-}
-
-void ComponentToStateMap(USkeletalMeshComponent* component, std::map<std::string, MeshState>& output)
-{
-	if (component != nullptr)
-	{
-		const USkeletalMesh* mesh = component->SkeletalMesh;
-		if (mesh != nullptr)
-		{
-			std::string name = translate(mesh->GetName());
-			auto ite = output.find(name);
-			if(ite == output.end())
-			{
-				ite = output.insert({ std::move(name), MeshState {} }).first;
-				const FSkeletalMeshResource* res = component->GetSkeletalMeshResource();
-				auto& lod = mesh->LODInfo;
-				for (size_t i = 0; i < res->LODModels.Num(); ++i)
-				{
-					const FStaticLODModel& mode = res->LODModels[i];
-					ite->second.lod_state.push_back(LODState{ mode.GetTotalFaces(), mode.Sections.Num(), lod[i].ScreenSize });
-				}
-			}
-			AddMeshCount(component->Mobility, component->CastShadow, ite->second);
-		}
-	}
-}
-
-void ExtractActor(AActor* act, std::map<std::string, MeshState>& static_mesh, std::map<std::string, MeshState>& dymamin_mesh, std::map<std::string, MeshState>& forest)
-{
-	TArray<AActor*> child_actor;
-	act->GetAllChildActors(child_actor);
-	if (child_actor.Num() != 0)
-	{
-		for (size_t i = 0; i < child_actor.Num(); ++i)
-			ExtractActor(child_actor[i], static_mesh, dymamin_mesh, forest);
-	}
-	auto static_mesh_actor = Cast<AStaticMeshActor>(act);
-	if (static_mesh_actor != nullptr)
-	{
-		if (static_mesh_actor->GetStaticMeshComponent() != nullptr)
-			ComponentToStateMap(static_mesh_actor->GetStaticMeshComponent(), static_mesh);
-	}
-	else {
-		const ASkeletalMeshActor* actorsk = Cast<ASkeletalMeshActor>(act);
-		if (actorsk != nullptr)
-		{
-			if (actorsk->GetSkeletalMeshComponent() != nullptr)
-				ComponentToStateMap(actorsk->GetSkeletalMeshComponent(), dymamin_mesh);
 		}
 		else {
-			AInstancedFoliageActor* actoraif = Cast<AInstancedFoliageActor>(act);
+			AInstancedFoliageActor* actoraif = Cast<AInstancedFoliageActor>(*all_actor);
 			if (actoraif != nullptr)
 			{
 				TMap<UFoliageType*, FFoliageMeshInfo*> map = actoraif->GetAllInstancesFoliageType();
 				for (auto& ite : map)
 				{
 					auto index = ite.Value->Instances.Num();
-					ComponentToStateMap(ite.Value->Component, forest, index);
+					auto component = ite.Value->Component;
+					if (IsValid(component))
+					{
+						auto mesh = component->GetStaticMesh();
+						if (mesh != nullptr)
+						{
+							auto name = mesh->GetName();
+							auto fine = m_all_mesh.find(name);
+							if (fine == m_all_mesh.end())
+							{
+								fine = m_all_mesh.insert({ name, MeshState {} }).first;
+								auto result = LoadMeshLoad(mesh);
+								fine->second.m_repeat_material = result.second;
+								fine->second.m_all_state = std::move(result.first);
+							}
+							fine->second.m_foliage_count += index;
+						}
+					}
 				}
 			}
 		}
-	}
-}
-
-void DetectObjectLOD(UWorld* World)
-{
-	std::map<std::string, MeshState> static_mesh;
-	std::map<std::string, MeshState> dynamic_mesh;
-	std::map<std::string, MeshState> forest_mesh;
-	TActorIterator<AActor> all_actor{ World };
-	for (all_actor; all_actor; ++all_actor)
-	{
-		ExtractActor(*all_actor, static_mesh, dynamic_mesh, forest_mesh);
 	}
 
 	FString ThePath = FPaths::ConvertRelativePathToFull(FPaths::ProjectLogDir());
 	FString CurrentDir = World->GetMapName();
 	ThePath += CurrentDir + L".csv";
-
-	std::ofstream file(*ThePath, std::ios::binary | std::ios::out);
-	if (file)
+	Doc::writer output(*ThePath, Doc::Format::UTF8_WITH_BOM);
+	
+	if (output.is_open())
 	{
-		unsigned char bom[] = { 0xef, 0xbb, 0xbf };
 		UE_LOG(LogTemp, Log, L"Success OpenFile %s", (*ThePath));
-		file.write(reinterpret_cast<const char*>(bom), 3);
-		file << translate(World->GetMapName()) << std::endl;
-		file << "静态模型" << std::endl;
-		file << "模型名字,模型使用数,动态数,固定数,产生阴影的个数,LOD面数,LODSection数,LOD屏幕距离" << std::endl;
-		for (auto& ite : static_mesh)
+		output.write(*World->GetMapName());
+		output.write(L"\r\n");
+		output.write(L"模型名字,Actor数,植物数,是否含有相同的Matrial,LOD面数,LODSection数,LOD屏幕距离\r\n");
+		std::wstringstream wss;
+		for (auto& ite : m_all_mesh)
 		{
-			file << ite.first << "," << ite.second.total_count << "," << ite.second.movable_count << "," <<
-				ite.second.stationary_count << "," << ite.second.cast_shadow_count << ",";
-			for (auto& ite2 : ite.second.lod_state)
-				file << ite2.triangle << "," << ite2.section << "," << ite2.screne_rate << ",";
-			file << std::endl;
-		}
-		file << std::endl;
-
-		file << "动态模型" << std::endl;
-		file << "模型名字,模型使用数,动态数,固定数,产生阴影的个数,LOD面数,LODSection数,LOD屏幕距离" << std::endl;
-		for (auto& ite : dynamic_mesh)
-		{
-			file << ite.first << "," << ite.second.total_count << "," << ite.second.movable_count << "," <<
-				ite.second.stationary_count << "," << ite.second.cast_shadow_count << ",";
-			for (auto& ite2 : ite.second.lod_state)
-				file << ite2.triangle << "," << ite2.section << "," << ite2.screne_rate << ",";
-			file << std::endl;
-		}
-		file << std::endl;
-
-		file << "植被模型" << std::endl;
-		file << "模型名字,模型使用数,动态数,固定数,产生阴影的个数,LOD面数,LODSection数,LOD屏幕距离" << std::endl;
-		for (auto& ite : forest_mesh)
-		{
-			file << ite.first << "," << ite.second.total_count << "," << ite.second.movable_count << "," <<
-				ite.second.stationary_count << "," << ite.second.cast_shadow_count << ",";
-			for (auto& ite2 : ite.second.lod_state)
-				file << ite2.triangle << "," << ite2.section << "," << ite2.screne_rate << ",";
-			file << std::endl;
-		}
-		file << std::endl;
-
-		for (auto& ite : forest_mesh)
-		{
-			auto ite2 = static_mesh.find(ite.first);
-			if (ite2 != static_mesh.end())
+			output.write(*ite.first);
+			output.write(L",");
+			output.write(NumberToString(ite.second.m_actor_count));
+			output.write(L",");
+			output.write(NumberToString(ite.second.m_foliage_count));
+			output.write(L",");
+			if(ite.second.m_repeat_material)
+				output.write(L"是");
+			else
+				output.write(L"否");
+			output.write(L",");
+			for (auto& ite : ite.second.m_all_state)
 			{
-				ite2->second.total_count += ite.second.total_count;
-				ite2->second.movable_count += ite.second.movable_count;
-				ite2->second.stationary_count += ite.second.stationary_count;
-				ite2->second.cast_shadow_count += ite.second.cast_shadow_count;
+				output.write(NumberToString(ite.triangle));
+				output.write(L",");
+				output.write(NumberToString(ite.section));
+				output.write(L",");
+				output.write(NumberToString(ite.screne_rate));
+				output.write(L",");
 			}
-			else {
-				static_mesh.insert(ite);
-			}
+			output.write(L"\r\n");
 		}
-		
-		file << "总静态模型" << std::endl;
-		file << "模型名字,模型使用数,动态数,固定数,产生阴影的个数,LOD面数,LODSection数,LOD屏幕距离" << std::endl;
-		for (auto& ite : static_mesh)
-		{
-			file << ite.first << "," << ite.second.total_count << "," << ite.second.movable_count << "," <<
-				ite.second.stationary_count << "," << ite.second.cast_shadow_count << ",";
-			for (auto& ite2 : ite.second.lod_state)
-				file << ite2.triangle << "," << ite2.section << "," << ite2.screne_rate << ",";
-			file << std::endl;
-		}
-		file << std::endl;
 	}
 	else {
 		UE_LOG(LogTemp, Log, L"File OpenFile %s", (*ThePath));
 	}
-
-
 	UE_LOG(LogTemp, Log, L"%s", (*World->GetMapName()));
 }
 
+
+
+
+/*
+void ListSameSectionOfStaticMesh(UWorld* World)
+{
+	TActorIterator<AActor> all_actor{ World };
+	std::map<FString, std::set<FString>> static_mesh_matrial;
+
+	for (all_actor; all_actor; ++all_actor)
+	{
+		AActor* A = *all_actor;
+		
+		AStaticMeshActor* SMA = Cast<AStaticMeshActor>(A);
+		if (IsValid(SMA))
+		{
+			UStaticMeshComponent* SMC = SMA->GetStaticMeshComponent();
+			UMaterialInterface* UMI2 = SMC->GetMaterial(0);
+			FString string2 = UMI2->GetName();
+			UStaticMesh* FSM = SMC->GetStaticMesh();
+			UMaterialInterface* UMI = FSM->GetMaterial(0);
+			FString string = UMI->GetName();
+		}
+	}
+}
+*/
 

@@ -8,7 +8,6 @@
 #include "MeshLODDetector.h"
 #include "SelectionFilter.h"
 #include "InfoRecord.h"
-#include <fstream>
 #include <map>
 #define LOCTEXT_NAMESPACE "FGaoShiPluginModule"
 
@@ -16,7 +15,7 @@ DECLARE_LOG_CATEGORY_EXTERN(GaoShiPlugin, Log, All);
 DEFINE_LOG_CATEGORY(GaoShiPlugin);
 
 
-FConsoleCommandWithWorldDelegate DetectObjectLODDelegate;
+FConsoleCommandWithWorldDelegate CheckStaticMeshDelegate;
 FConsoleCommandWithArgsDelegate FilterStaticMeshDelegate;
 FConsoleCommandWithArgsDelegate FilterActorClassNameDelegate;
 FConsoleCommandWithArgsDelegate FilterActorDisplayNameDelegate;
@@ -27,6 +26,7 @@ FConsoleCommandWithWorldAndArgsDelegate DebugCommandLineOutputDelegate;
 FConsoleCommandWithWorldAndArgsDelegate CopySeletionActorNameDelegate;
 FConsoleCommandWithWorldDelegate CopyCurrentPositionDelegate;
 FConsoleCommandWithArgsDelegate MoveToPositionDelegate;
+FConsoleCommandWithWorldDelegate ListSameSectionDelehate;
 //FConsoleCommandWithWorldAndArgsDelegate MoveToRecordedPostionDelegate;
 //FConsoleCommandWithWorldAndArgsDelegate CopyRecordedPositionDelegate;
 
@@ -35,17 +35,19 @@ void FGaoShiPluginModule::StartupModule()
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	auto& ref = IConsoleManager::Get();
 
-	DetectObjectLODDelegate.BindLambda([](UWorld* World) {
-		DetectObjectLOD(World);
+	CheckStaticMeshDelegate.BindLambda([](UWorld* World) {
+		CheckStaticMesh(World);
 	});
-	ref.RegisterConsoleCommand(L"GSDetectObjectLod", L"", DetectObjectLODDelegate);
+	ref.RegisterConsoleCommand(L"GSCheckStaticMesh", L"", CheckStaticMeshDelegate);
 
 #ifdef WITH_EDITORONLY_DATA
 	FilterStaticMeshDelegate.BindLambda([](const TArray< FString >& para) {
 		if (para.Num() == 1)
 			FilterStaticMesh(para[0]);
+		else if (para.Num() == 0)
+			FilterStaticMesh(L".+");
 		else
-			UE_LOG(GaoShiPlugin, Log, L"GSFilterStaticMesh need one parameter for this command");
+			UE_LOG(GaoShiPlugin, Log, L"GSFilterStaticMesh need one or zero parameter for this command");
 	});
 	ref.RegisterConsoleCommand(L"GSFilterStaticMesh", L"", FilterStaticMeshDelegate);
 

@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="tool">
+      <UniqueIdentifier>{e5ed6899-1e05-4967-ad95-f073f70faedb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="tool\assert.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\character_encoding.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\document.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\script_analyze.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="tool\tool.cpp">
+      <Filter>tool</Filter>
+    </ClCompile>
+    <ClCompile Include="document_interface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="script_analyze_interface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tool\asset.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\auto_adapter.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\character_encoding.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\document.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\intrusive_ptr.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\mail.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\script_analyze.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\tmp.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\tmpcall.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="tool\tool.h">
+      <Filter>tool</Filter>
+    </ClInclude>
+    <ClInclude Include="document_interface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="script_analyze_interface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

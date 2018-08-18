@@ -1,10 +1,9 @@
 #include "InfoRecord.h"
 #include "HAL/PlatformApplicationMisc.h"
-#include "ScriptionAnalyze.h"
 #include "LevelEditorViewport.h"
+#include "script_analyze_interface.h"
 #include <sstream>
 #include <map>
-#include <assert.h>
 #ifdef WITH_EDITORONLY_DATA
 
 using namespace Lexical;
@@ -17,9 +16,9 @@ enum class ReplceMark
 	Normal
 };
 
-const regex_token<ReplceMark, wchar_t>& replace_mark()
+const regex_token<ReplceMark>& replace_mark()
 {
-	static regex_token<ReplceMark, wchar_t> replace_mark_implement
+	static regex_token<ReplceMark> replace_mark_implement
 	{
 		{ L"%CN", ReplceMark::ClassName },
 	{ L"%DN", ReplceMark::DisplayName },
@@ -32,23 +31,16 @@ const regex_token<ReplceMark, wchar_t>& replace_mark()
 
 void CopySelectionActorToClioboard(const FString& replace)
 {
-	std::wstring result;
+	std::vector<wchar_t> result;
 	result.resize(replace.Len());
-	size_t index = 0;
-	Lexical::regex_token_wrapper<wchar_t> rtw(*replace, replace.Len());
-	Lexical::ErrorState state = Lexical::ErrorState::OJBK;
-	while (auto token = rtw.generate_token(Lexical::escape_sequence_cpp_wchar(), state))
-	{
-		auto res = rtw.string();
-		index += Lexical::translate(*token, std::get<0>(res), std::get<1>(res), &result[index] , replace.Len() - index);
-	}
-	result.resize(index);
+	auto count = translate_escape_sequence(*replace, replace.Len(), result.data(), result.size());
+	result.resize(count);
 	std::vector<std::tuple<ReplceMark, FString>> pattern;
-	Lexical::regex_token_wrapper<wchar_t> rtw2(result);
-	while (auto token = rtw2.generate_token(replace_mark(), state))
+	regex_token_wrapper rtw2(result.data(), result.data() + result.size());
+	while (auto token = rtw2.generate_token(replace_mark()))
 	{
 		auto res = rtw2.string();
-		std::wstring st(std::get<0>(res), std::get<1>(res));
+		std::wstring st(res.m_string, res.m_count);
 		pattern.push_back({ *token, st.c_str()});
 	}
 	FString TotalString;
@@ -230,53 +222,5 @@ void MoveToPosition(const FString& replace)
 		}
 	}
 }
-
-/*
-std::map<FString, std::tuple<FVector, FRotator>> m_record_location;
-void RecordCurrentPosition(const FString& replace)
-{
-	FVector CameraLocation;
-	FRotator CameraRotation;
-	for (auto LevelVC : GEditor->LevelViewportClients)
-	{
-		if (LevelVC && LevelVC->IsPerspective())
-		{
-			CameraLocation = LevelVC->GetViewLocation();
-			CameraRotation = LevelVC->GetViewRotation();
-			m_record_location[replace] = { CameraLocation , CameraRotation };
-			break;
-		}
-	}
-}
-
-void MoveToRecordedPosition(const FString& replace)
-{
-	auto ite = m_record_location.find(replace);
-	if (ite != m_record_location.end())
-	{
-		for (auto LevelVC : GEditor->LevelViewportClients)
-		{
-			if (LevelVC && LevelVC->IsPerspective())
-			{
-				LevelVC->SetViewLocation(std::get<0>(ite->second));
-				LevelVC->SetViewRotation(std::get<1>(ite->second));
-				break;
-			}
-		}
-	}
-}
-
-FString PositionToString(const FVector& FV, const FRotator& FR)
-{
-	return FString{ L"{" } +FV.ToString() + FString{ L" " } +FR.ToString() + FString{ L"}" };
-}
-
-void CopyRecordedPosition(const FString& replace)
-{
-	auto ite = m_record_location.find(replace);
-	if(ite != m_record_location.end())
-		FPlatformApplicationMisc::ClipboardCopy(*PositionToString(std::get<0>(ite->second), std::get<1>(ite->second)));
-}
-*/
 
 #endif
