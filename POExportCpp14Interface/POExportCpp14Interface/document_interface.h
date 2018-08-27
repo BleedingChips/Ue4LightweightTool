@@ -12,6 +12,8 @@ namespace Doc
 	struct writer
 	{
 		writer(const wchar_t*, Format format = Format::UTF8);
+		writer();
+		writer(const writer&& w);
 		~writer();
 		void write(const wchar_t*, size_t count);
 		void write(const wchar_t*);

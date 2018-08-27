@@ -14,68 +14,56 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="tool">
-      <UniqueIdentifier>{e5ed6899-1e05-4967-ad95-f073f70faedb}</UniqueIdentifier>
+      <UniqueIdentifier>{378c99cf-d4a5-4c5a-abee-4c973d0aa8bc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tool\assert.cpp">
+    <ClCompile Include="..\..\..\po\include\po\tool\assert.cpp">
       <Filter>tool</Filter>
     </ClCompile>
-    <ClCompile Include="tool\character_encoding.cpp">
+    <ClCompile Include="..\..\..\po\include\po\tool\character_encoding.cpp">
       <Filter>tool</Filter>
     </ClCompile>
-    <ClCompile Include="tool\document.cpp">
+    <ClCompile Include="..\..\..\po\include\po\tool\document.cpp">
       <Filter>tool</Filter>
     </ClCompile>
-    <ClCompile Include="tool\script_analyze.cpp">
+    <ClCompile Include="..\..\..\po\include\po\tool\script_analyze.cpp">
       <Filter>tool</Filter>
     </ClCompile>
-    <ClCompile Include="tool\tool.cpp">
+    <ClCompile Include="..\..\..\po\include\po\tool\tool.cpp">
       <Filter>tool</Filter>
-    </ClCompile>
-    <ClCompile Include="document_interface.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="script_analyze_interface.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="tool\asset.h">
+    <ClInclude Include="..\..\..\po\include\po\tool\asset.h">
       <Filter>tool</Filter>
     </ClInclude>
-    <ClInclude Include="tool\auto_adapter.h">
+    <ClInclude Include="..\..\..\po\include\po\tool\auto_adapter.h">
       <Filter>tool</Filter>
     </ClInclude>
-    <ClInclude Include="tool\character_encoding.h">
+    <ClInclude Include="..\..\..\po\include\po\tool\character_encoding.h">
       <Filter>tool</Filter>
     </ClInclude>
-    <ClInclude Include="tool\document.h">
+    <ClInclude Include="..\..\..\po\include\po\tool\document.h">
       <Filter>tool</Filter>
     </ClInclude>
-    <ClInclude Include="tool\intrusive_ptr.h">
+    <ClInclude Include="..\..\..\po\include\po\tool\intrusive_ptr.h">
       <Filter>tool</Filter>
     </ClInclude>
-    <ClInclude Include="tool\mail.h">
+    <ClInclude Include="..\..\..\po\include\po\tool\mail.h">
       <Filter>tool</Filter>
     </ClInclude>
-    <ClInclude Include="tool\script_analyze.h">
+    <ClInclude Include="..\..\..\po\include\po\tool\script_analyze.h">
       <Filter>tool</Filter>
     </ClInclude>
-    <ClInclude Include="tool\tmp.h">
+    <ClInclude Include="..\..\..\po\include\po\tool\tmp.h">
       <Filter>tool</Filter>
     </ClInclude>
-    <ClInclude Include="tool\tmpcall.h">
+    <ClInclude Include="..\..\..\po\include\po\tool\tmpcall.h">
       <Filter>tool</Filter>
     </ClInclude>
-    <ClInclude Include="tool\tool.h">
+    <ClInclude Include="..\..\..\po\include\po\tool\tool.h">
       <Filter>tool</Filter>
-    </ClInclude>
-    <ClInclude Include="document_interface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="script_analyze_interface.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

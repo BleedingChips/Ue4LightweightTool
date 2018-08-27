@@ -1,33 +1,12 @@
 #include "InfoRecord.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "LevelEditorViewport.h"
-#include "script_analyze_interface.h"
+#include "POExportCpp14Interface/script_analyze_interface.h"
 #include <sstream>
 #include <map>
 #ifdef WITH_EDITORONLY_DATA
 
 using namespace Lexical;
-
-enum class ReplceMark
-{
-	ClassName,
-	DisplayName,
-	IDName,
-	Normal
-};
-
-const regex_token<ReplceMark>& replace_mark()
-{
-	static regex_token<ReplceMark> replace_mark_implement
-	{
-		{ L"%CN", ReplceMark::ClassName },
-	{ L"%DN", ReplceMark::DisplayName },
-	{L"%IN", ReplceMark ::IDName},
-	{L"%.+", ReplceMark::Normal},
-	{L"[^%]+", ReplceMark::Normal}
-	};
-	return replace_mark_implement;
-};
 
 void CopySelectionActorToClioboard(const FString& replace)
 {
@@ -35,51 +14,51 @@ void CopySelectionActorToClioboard(const FString& replace)
 	result.resize(replace.Len());
 	auto count = translate_escape_sequence(*replace, replace.Len(), result.data(), result.size());
 	result.resize(count);
-	std::vector<std::tuple<ReplceMark, FString>> pattern;
-	regex_token_wrapper rtw2(result.data(), result.data() + result.size());
-	while (auto token = rtw2.generate_token(replace_mark()))
+	std::vector<std::tuple<Lexical::ReplacementToken, FString>> pattern;
+	
+	if (Lexical::handle_replacement_token(result.data(), result.size(), 
+		[&](Lexical::ReplacementToken token, const wchar_t* input, size_t input_count) {
+		pattern.push_back({ token,FString{static_cast<int32_t>(input_count), input} });
+	}))
 	{
-		auto res = rtw2.string();
-		std::wstring st(res.m_string, res.m_count);
-		pattern.push_back({ *token, st.c_str()});
-	}
-	FString TotalString;
-	USelection* selection = GEditor->GetSelectedActors();
-	if (IsValid(selection))
-	{
-		TArray<TWeakObjectPtr<>> object_array;
-		selection->GetSelectedObjects(object_array);
-		auto count = object_array.Num();
-		for (size_t i = 0; i < count; ++i)
+		FString TotalString;
+		USelection* selection = GEditor->GetSelectedActors();
+		if (IsValid(selection))
 		{
-			auto ptr = object_array[i];
-			if (ptr.IsValid())
+			TArray<TWeakObjectPtr<>> object_array;
+			selection->GetSelectedObjects(object_array);
+			auto count = object_array.Num();
+			for (size_t i = 0; i < count; ++i)
 			{
-				FName N = ptr->GetClass()->GetFName();
-				FString ClassName = N.ToString();
-				FString IDName = ptr->GetName();
-				FString DisplayName = UKismetSystemLibrary::GetDisplayName(ptr.Get());
-				for (auto& ite : pattern)
+				auto ptr = object_array[i];
+				if (ptr.IsValid())
 				{
-					switch (std::get<0>(ite))
+					FName N = ptr->GetClass()->GetFName();
+					FString ClassName = N.ToString();
+					FString IDName = ptr->GetName();
+					FString DisplayName = UKismetSystemLibrary::GetDisplayName(ptr.Get());
+					for (auto& ite : pattern)
 					{
-					case ReplceMark::ClassName:
-						TotalString += ClassName;
-						break;
-					case ReplceMark::DisplayName:
-						TotalString += DisplayName;
-						break;
-					case ReplceMark::IDName:
-						TotalString += IDName;
-						break;
-					case ReplceMark::Normal:
-						TotalString += std::get<1>(ite);
-						break;
+						switch (std::get<0>(ite))
+						{
+						case Lexical::ReplacementToken::ClassName:
+							TotalString += ClassName;
+							break;
+						case Lexical::ReplacementToken::DisplayName:
+							TotalString += DisplayName;
+							break;
+						case Lexical::ReplacementToken::IDName:
+							TotalString += IDName;
+							break;
+						case Lexical::ReplacementToken::Normal:
+							TotalString += std::get<1>(ite);
+							break;
+						}
 					}
 				}
 			}
+			FPlatformApplicationMisc::ClipboardCopy(*TotalString);
 		}
-		FPlatformApplicationMisc::ClipboardCopy(*TotalString);
 	}
 }
 

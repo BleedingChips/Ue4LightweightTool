@@ -1,5 +1,5 @@
 #include "document_interface.h"
-#include "tool/document.h"
+#include "po/tool/document.h"
 #include "assert.h"
 PO::Doc::Format translate(Doc::Format format)
 {
@@ -40,4 +40,6 @@ namespace Doc
 	void writer::write(const wchar_t* string, size_t count) { reinterpret_cast<PO::Doc::writer<wchar_t>*>(implement)->write(string, count); }
 	void writer::write(const wchar_t* string) { reinterpret_cast<PO::Doc::writer<wchar_t>*>(implement)->write(string); }
 	bool writer::is_open() const noexcept { return reinterpret_cast<PO::Doc::writer<wchar_t>*>(implement)->is_open(); }
+	writer::writer() : implement(new PO::Doc::writer<wchar_t>{ }) {}
+	writer::writer(const writer&& w) : implement(new PO::Doc::writer<wchar_t>{ std::move(*static_cast<PO::Doc::writer<wchar_t>*>(w.implement)) }) {}
 }

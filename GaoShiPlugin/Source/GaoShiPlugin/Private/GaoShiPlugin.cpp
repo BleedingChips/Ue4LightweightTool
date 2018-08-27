@@ -5,9 +5,10 @@
 #include "Engine.h"
 #include "Classes/Animation/SkeletalMeshActor.h"
 #include "InstancedFoliageActor.h"
-#include "MeshLODDetector.h"
+#include "CheckStaticMesh.h"
 #include "SelectionFilter.h"
 #include "InfoRecord.h"
+#include "FoliageType.h"
 #include <map>
 #define LOCTEXT_NAMESPACE "FGaoShiPluginModule"
 
@@ -15,7 +16,7 @@ DECLARE_LOG_CATEGORY_EXTERN(GaoShiPlugin, Log, All);
 DEFINE_LOG_CATEGORY(GaoShiPlugin);
 
 
-FConsoleCommandWithWorldDelegate CheckStaticMeshDelegate;
+FConsoleCommandWithWorldDelegate CheckCurrentLevelStaticMeshDelegate;
 FConsoleCommandWithArgsDelegate FilterStaticMeshDelegate;
 FConsoleCommandWithArgsDelegate FilterActorClassNameDelegate;
 FConsoleCommandWithArgsDelegate FilterActorDisplayNameDelegate;
@@ -35,10 +36,10 @@ void FGaoShiPluginModule::StartupModule()
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 	auto& ref = IConsoleManager::Get();
 
-	CheckStaticMeshDelegate.BindLambda([](UWorld* World) {
-		CheckStaticMesh(World);
+	CheckCurrentLevelStaticMeshDelegate.BindLambda([](UWorld* World) {
+		CheckCurrentLevelStaticMesh(World);
 	});
-	ref.RegisterConsoleCommand(L"GSCheckStaticMesh", L"", CheckStaticMeshDelegate);
+	ref.RegisterConsoleCommand(L"GSCheckCurrentLevelStaticMesh", L"", CheckCurrentLevelStaticMeshDelegate);
 
 #ifdef WITH_EDITORONLY_DATA
 	FilterStaticMeshDelegate.BindLambda([](const TArray< FString >& para) {
@@ -133,6 +134,7 @@ void FGaoShiPluginModule::StartupModule()
 		for (size_t i = 0; i < para.Num(); ++i)
 			Result += FString{ L"<" } +para[i] + FString{ L">," };
 		UE_LOG(GaoShiPlugin, Log, L"%s", *Result);
+		//CheckTotalStaticMesh();
 	});
 	ref.RegisterConsoleCommand(L"GSDebugCommandLineOutput", L"", DebugCommandLineOutputDelegate);
 	

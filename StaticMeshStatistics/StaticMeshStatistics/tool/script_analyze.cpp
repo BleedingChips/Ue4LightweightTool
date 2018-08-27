@@ -4,148 +4,8 @@
 #include <string>
 #include <iostream>
 
-
-
-
 namespace PO::Lexical
 {
-
-	void line_spliter<char16_t>::clear() noexcept
-	{
-		m_no_need_input = false;
-		m_state = 0;
-		m_string.clear();
-		m_avalible = true;
-	}
-
-	std::optional<LineToken> line_spliter<char16_t>::generate_implement() noexcept
-	{
-		switch (m_state)
-		{
-		case 0:
-			if (m_last_input_size != 0)
-			{
-				if (m_input[0] != u'\r' && m_input[0] != u'\n')
-					m_string.append(m_input, m_last_input_size);
-				else if (m_input[0] == u'\n')
-					return { LineToken::LineBreakLF };
-				else if (m_input[0] == u'\r')
-					m_state = 1;
-			}
-			else
-			{
-				m_avalible = false;
-				return { LineToken::Line };
-			}
-				
-			break;
-		case 1:
-			m_state = 0;
-			if (m_last_input_size != 0)
-			{
-				if (m_input == 0)
-				{
-					return { LineToken::LineBreakCR };
-				}
-				else if (m_input[0] != u'\n')
-				{
-					m_no_need_input = true;
-					return { LineToken::LineBreakCR };
-				}
-			}
-			return { LineToken::LineBreakCR };
-			break;
-		}
-		return {};
-	}
-
-	void trope_line_spliter<char16_t>::clear() noexcept
-	{
-		m_no_need_input = false;
-		m_state = 0;
-		m_string.clear();
-		m_avalible = true;
-	}
-
-	enum TropLineSpliterState : uint32_t
-	{
-		Empty = 0,
-		CRStart,
-		TropeStart,
-		TropeStartCR,
-	};
-
-	std::optional<LineToken> trope_line_spliter<char16_t>::generate_implement() noexcept
-	{
-		switch (m_state)
-		{
-		case Empty:
-			if (m_last_input_size != 0)
-			{
-				if (m_input[0] != u'\r' && m_input[0] != u'\n' && m_input[0] != u'\\')
-					m_string.append(m_input, m_last_input_size);
-				else if (m_input[0] == u'\n')
-					return { LineToken::LineBreakLF };
-				else if (m_input[0] == u'\r')
-					m_state = CRStart;
-				else if (m_input[0] == u'\\')
-					m_state = TropeStart;
-			}
-			else
-			{
-				return { LineToken::Line };
-			}
-			break;
-		case CRStart:
-			m_state = 0;
-			if (m_last_input_size != 0)
-			{
-				if (m_input == 0)
-				{
-					return { LineToken::LineBreakCR };
-				}
-				else if (m_input[0] != u'\n')
-				{
-					m_no_need_input = true;
-					return { LineToken::LineBreakCR };
-				}
-			}
-			return { LineToken::LineBreakCR };
-			break;
-		case TropeStart:
-			if (m_last_input_size != 0)
-			{
-				if (m_input[0] != u'\r' && m_input[0] != u'\n')
-				{
-					m_string.push_back(u'\\');
-					m_no_need_input = true;
-					m_state = Empty;
-				}
-				else if (m_input[0] == u'\r')
-					m_state = TropeStartCR;
-				else if (m_input[0] == u'\n')
-					m_state = Empty;
-				break;
-			}
-			else {
-				m_string.push_back(u'\\');
-				m_state = Empty;
-				return { LineToken::Line };
-			}
-		case TropeStartCR:
-			m_state = Empty;
-			if (m_last_input_size != 0)
-			{
-				if (m_input[0] != u'\n')
-					m_no_need_input = true;
-			}
-			else {
-				return { LineToken::LineBreakCR };
-			}
-			break;
-		}
-		return {};
-	}
 
 	uint64_t OctalToValue(const wchar_t* input, size_t input_size)
 	{
@@ -180,7 +40,7 @@ namespace PO::Lexical
 	const regex_token<EscapeSequence, wchar_t>& escape_sequence_cpp_wchar() noexcept
 	{
 		static regex_token<EscapeSequence, wchar_t> escape_sequence_cpp_wchar_implement{
-			{ LR"(\\')", EscapeSequence::SingleQuote },
+		{ LR"(\\')", EscapeSequence::SingleQuote },
 		{ LR"(\\")", EscapeSequence::DoubleQuote },
 		{ LR"(\\\?)", EscapeSequence::QuestionMark },
 		{ LR"(\\\\)", EscapeSequence::BackSlash },

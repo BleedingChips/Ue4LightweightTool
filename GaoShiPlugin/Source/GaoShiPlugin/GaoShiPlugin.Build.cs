@@ -7,7 +7,7 @@ public class GaoShiPlugin : ModuleRules
 
     private string ThirdPartProject
     {
-        get { return ModuleDirectory + "\\..\\..\\ThirdPartProject\\"; }
+        get { return ModuleDirectory + "\\..\\POExportCpp14Interface\\"; }
     }
 
     public GaoShiPlugin(ReadOnlyTargetRules Target) : base(Target)
@@ -31,8 +31,9 @@ public class GaoShiPlugin : ModuleRules
         PublicIncludePaths.AddRange(
 			new string[] {
 				"GaoShiPlugin/Public",
-                 "Foliage/Public",
-                ThirdPartProject + "ThirdPartProject",
+                "Foliage/Public",
+                 "Engine",
+                ThirdPartProject,
 				// ... add public include paths required here ...
 			}
 			);
@@ -42,7 +43,11 @@ public class GaoShiPlugin : ModuleRules
 			new string[] {
 				"GaoShiPlugin/Private",
                 "Foliage/Private",
-                ThirdPartProject + "ThirdPartProject",
+                "Foliage/Public",
+                "Engine",
+                //"Engine/Class/Engine",
+                "Engine",
+                ThirdPartProject,
 				// ... add other private include paths required here ...
 			}
 			);
@@ -55,6 +60,8 @@ public class GaoShiPlugin : ModuleRules
 				"Core",
                 "Foliage",
                 "ApplicationCore",
+                "ContentBrowser",
+                "Engine"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -72,20 +79,15 @@ public class GaoShiPlugin : ModuleRules
 			);
 
         string ThirdPartPath = ThirdPartProject;
-        if (Target.Platform == UnrealTargetPlatform.Win64)
-            ThirdPartPath += "x64\\";
-        /*
-        if (Target.Configuration == UnrealTargetConfiguration.Debug
-            || Target.Configuration == UnrealTargetConfiguration.DebugGame)
-            ThirdPartPath += "debug\\";
-        else
-        */
-        ThirdPartPath += "release\\";
+        if (Target.Platform == UnrealTargetPlatform.Win32)
+            ThirdPartPath += "win32\\";
+        else if (Target.Platform == UnrealTargetPlatform.Win64)
+            ThirdPartPath += "win64\\";
 
         PublicAdditionalLibraries.AddRange(
             new string[]
             {
-                ThirdPartPath + "ThirdPartProject.lib"
+                ThirdPartPath + "POExportCpp14Interface.lib"
             }
             );
 
